@@ -13,8 +13,4 @@ export class EmpresaController {
         return await this.empresaService.getAllEmpresas();
     }
 
-    @Get('/:codEmp')
-    async getAll(@Param('codEmp') codEmp: string): Promise<Empresa> {
-        return this.empresaService.getEmpresaByCod(codEmp)
-    }
 }
