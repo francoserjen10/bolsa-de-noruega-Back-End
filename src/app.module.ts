@@ -8,6 +8,7 @@ import { EmpresaService } from './empresas/services/empresa.service';
 import { EmpresaController } from './empresas/controllers/empresa.controller';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from '@nestjs/config';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { ConfigModule } from '@nestjs/config';
         name: Empresa.name,
         schema: EmpresaSchema
       }
-    ])
+    ]),
+    HttpModule,
   ],
   controllers: [AppController, EmpresaController],
   providers: [AppService, EmpresaService],
