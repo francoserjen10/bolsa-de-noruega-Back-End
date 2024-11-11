@@ -17,7 +17,7 @@ import { Cotizacion, CotizacionSchema } from './cotizaciones/models/schemas/coti
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
-    MongooseModule.forRoot(process.env.API_BASE_URL2),
+    MongooseModule.forRoot(process.env.API_MONGO_DB),
     MongooseModule.forFeature([
       {
         name: Empresa.name,
