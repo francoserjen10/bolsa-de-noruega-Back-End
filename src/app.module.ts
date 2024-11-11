@@ -9,6 +9,9 @@ import { EmpresaController } from './empresas/controllers/empresa.controller';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
+import { CotizacionesController } from './cotizaciones/controller/cotizaciones.controller';
+import { CotizacionesService } from './cotizaciones/services/cotizaciones.service';
+import { Cotizacion, CotizacionSchema } from './cotizaciones/models/schemas/cotizacion';
 
 @Module({
   imports: [
@@ -19,12 +22,16 @@ import { HttpModule } from '@nestjs/axios';
       {
         name: Empresa.name,
         schema: EmpresaSchema
+      },
+      {
+        name: Cotizacion.name,
+        schema: CotizacionSchema
       }
     ]),
     HttpModule,
   ],
-  controllers: [AppController, EmpresaController],
-  providers: [AppService, EmpresaService],
+  controllers: [AppController, EmpresaController, CotizacionesController],
+  providers: [AppService, EmpresaService, CotizacionesService],
   exports: []
 })
 export class AppModule { }
