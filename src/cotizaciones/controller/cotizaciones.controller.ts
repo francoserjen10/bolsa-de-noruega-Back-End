@@ -1,4 +1,21 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { CotizacionesService } from '../services/cotizaciones.service';
+import { Cotizacion } from '../models/schemas/cotizacion';
+import { error } from 'console';
 
 @Controller('cotizaciones')
-export class CotizacionesController {}
+export class CotizacionesController {
+
+    constructor(private cotizacionesService: CotizacionesService) { }
+
+    @Get('by-date/:cod/:startDate/:endDate')
+    async getAllCotizacionesByDate(@Param('cod') cod: string, @Param('startDate') startDate: string, @Param('endDate') endDate: string): Promise<Cotizacion[]> {
+        try {
+            const respones = this.cotizacionesService.getCotizacionesByEmpresaAndDateRange(cod, startDate, endDate);
+            console.log("controller", respones);
+            return respones;
+        } catch {
+            throw error;
+        }
+    }
+}
