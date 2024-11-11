@@ -18,4 +18,15 @@ export class CotizacionesController {
             throw error;
         }
     }
+
+    @Get('by-date-and-hour/:cod/:date/:hour')
+    async getCotizacionesByDateAndHour(@Param('cod') cod: string, @Param('date') date: string, @Param('hour') hour: string): Promise<Cotizacion> {
+        try {
+            const respones = this.cotizacionesService.getCotizacionByDateAndHour(cod, date, hour);
+            console.log("controller", respones);
+            return respones;
+        } catch {
+            throw error;
+        }
+    }
 }
