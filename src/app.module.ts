@@ -12,6 +12,7 @@ import { HttpModule } from '@nestjs/axios';
 import { CotizacionesController } from './cotizaciones/controller/cotizaciones.controller';
 import { CotizacionesService } from './cotizaciones/services/cotizaciones.service';
 import { Cotizacion, CotizacionSchema } from './cotizaciones/models/schemas/cotizacion';
+import { CronService } from './services/cron.service';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { Cotizacion, CotizacionSchema } from './cotizaciones/models/schemas/coti
     HttpModule,
   ],
   controllers: [AppController, EmpresaController, CotizacionesController],
-  providers: [AppService, EmpresaService, CotizacionesService],
+  providers: [AppService, EmpresaService, CotizacionesService, CronService],
   exports: []
 })
 export class AppModule { }
