@@ -20,15 +20,18 @@ export class EmpresaService {
             const llamadasEmpresas = empresasList.map((empresa) =>
                 this.httpService.get(`${baseURL}/empresas/${empresa}/details`)
             );
-
             // Usar `forkJoin` para ejecutar todas las llamadas en paralelo y luego convertir la respuesta a una promesa
             const responses = await lastValueFrom(forkJoin(llamadasEmpresas));
-
             // Extraer los datos de cada respuesta y retornarlos
-            const data = responses.map((resp: any) => resp.data);
-            console.log(data);  // Muestra la respuesta en consola
-            return data;  // Retorna la data directamente
-
+            const datas = await Promise.all(
+                responses.map((value) => {
+                    const data = value.data
+                    const newEmpresa = new this.empresaModel(data);
+                    const savedEmpresa = newEmpresa.save();
+                    return savedEmpresa;
+                })
+            );
+            return datas;  // Retorna la data directamente
         } catch (error) {
             console.error("Error fetching empresas:", error);
             throw error;
