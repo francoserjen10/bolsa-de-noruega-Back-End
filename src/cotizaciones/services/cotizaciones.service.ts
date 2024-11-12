@@ -6,6 +6,7 @@ import { Model } from 'mongoose';
 import { baseURL } from 'src/axios/config.gempresa';
 import { lastValueFrom } from 'rxjs';
 import { Empresa } from 'src/empresas/models/schemas/empresa.schema';
+import { empresasList } from 'src/empresas/models/empresas-mock-list';
 
 @Injectable()
 export class CotizacionesService {
@@ -14,6 +15,37 @@ export class CotizacionesService {
         @InjectModel(Cotizacion.name) private cotizacionModel: Model<Cotizacion>,
         @InjectModel(Empresa.name) private empresaModel: Model<Empresa>,
         private readonly httpService: HttpService) { }
+
+    async getAllCotizaciones(): Promise<Cotizacion[][]> {
+        try {
+            const allCotizacionesPromises = empresasList.map(async (emp) => {
+                if (emp === '') {
+                    throw new Error(`Codigo de empresa desconocido.`);
+                }
+                const itinialDate = '2023-12-31T23:00';
+                let newDate = new Date();
+                const formatedDate = newDate.toISOString().slice(0, 16);
+                const cotizacionesForEmp = this.getCotizacionesByEmpresaAndDateRange(emp, itinialDate, formatedDate);
+                if (!cotizacionesForEmp) {
+                    throw new Error(`Las cotizaciones no existen.`);
+                }
+                const savedCotizaciones = await Promise.all(
+                    (await cotizacionesForEmp).map(async (cot) => {
+                        const newCotizacion = new this.cotizacionModel({
+                            ...cot
+                        });
+                        return await newCotizacion.save();
+                    })
+                )
+                return savedCotizaciones;
+            });
+            const allSavedCotizaciones = await Promise.all(allCotizacionesPromises);
+            return allSavedCotizaciones;
+        } catch (error) {
+            console.error("Error, no se pudieron obtener todas las cotizaciones de todas las empresas:", error);
+            throw new Error("Error al obtener las cotizaciones desde la API Gempresa.");
+        }
+    }
 
     // Obtengo cotizaciones por rango de fecha y codigo de empresa
     async getCotizacionesByEmpresaAndDateRange(cod: string, startDate: string, endDate: string): Promise<Cotizacion[]> {
@@ -64,3 +96,14 @@ export class CotizacionesService {
     }
 
 }
+
+
+// Se verifica si existe esta cotizacion en la base de datos
+// const existCotizacion = await this.cotizacionModel.findOne({
+//     empresa: empresa.codempresa,
+//     fecha: cotData.fecha
+// });
+// if (existCotizacion) {
+//     throw new Error(`La cotizacion para la empresa: ${cod} ya existe para la fecha ${cotData.fecha}.`);
+// }
+

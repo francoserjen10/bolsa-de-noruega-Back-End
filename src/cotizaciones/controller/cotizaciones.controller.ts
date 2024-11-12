@@ -8,6 +8,17 @@ export class CotizacionesController {
 
     constructor(private cotizacionesService: CotizacionesService) { }
 
+    @Get()
+    async getAllCotizaciones(): Promise<Cotizacion[][]> {
+        try {
+            const serviceResponse = this.cotizacionesService.getAllCotizaciones();
+            console.log("serviceResponse controller", serviceResponse);
+            return serviceResponse;
+        } catch {
+            throw error;
+        }
+    }
+
     @Get('by-date/:cod/:startDate/:endDate')
     async getAllCotizacionesByDate(@Param('cod') cod: string, @Param('startDate') startDate: string, @Param('endDate') endDate: string): Promise<Cotizacion[]> {
         try {
