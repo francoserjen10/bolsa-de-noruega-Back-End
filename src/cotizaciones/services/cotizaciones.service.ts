@@ -15,30 +15,35 @@ export class CotizacionesService {
         @InjectModel(Empresa.name) private empresaModel: Model<Empresa>,
         private readonly httpService: HttpService) { }
 
-    //Modificar nombre
+    // Obtengo cotizaciones por rango de fecha y codigo de empresa
     async getCotizacionesByEmpresaAndDateRange(cod: string, startDate: string, endDate: string): Promise<Cotizacion[]> {
         try {
-            const response$ = this.httpService.get(`${baseURL}/empresas/${cod}/cotizaciones?fechaDesde=${startDate}&fechaHasta=${endDate}`);
-            const responesData = await lastValueFrom(response$).then((value) => value.data);
-            if (responesData.lenght !== 0) {
-                const empresa = await this.empresaModel.findOne({ codempresa: cod });
-                if (!empresa) {
-                    throw new Error(`La empresa con código: ${cod} no se encuentra registrada.`);
-                }
-                const savedCotizaciones = await Promise.all(
-                    responesData.map(async (cotData) => {
-                        const newCotizacion = new this.cotizacionModel({
-                            ...cotData,
-                            empresa: empresa.codempresa
-                        });
-                        return await newCotizacion.save();
-                    })
-                );
-                return savedCotizaciones;
-            } else {
-                console.warn("No se encontraron cotizaciones en el rango de fechas especificado.");
-                return []; // Retornar un arreglo vacío si no hay datos
+            //Verificar si el cod empresa existe 
+            const empresa = await this.empresaModel.findOne({ codempresa: cod });
+            //Si no exites erro
+            if (!empresa) {
+                throw new Error(`La empresa con código: ${cod} no se encuentra registrada.`);
             }
+            // Si existe, accede a la url
+            const response$ = this.httpService.get(`${baseURL}/empresas/${cod}/cotizaciones?fechaDesde=${startDate}&fechaHasta=${endDate}`);
+            // Obtengo la data
+            const responesData = await lastValueFrom(response$).then((value) => value.data);
+            //Verifico si existe la data
+            if (responesData.lenght === "") {
+                throw new Error(`No se encuentran las cotizaciones.`);
+            }
+            // Recorro las cotizaciones en una sola peticion
+            const savedCotizaciones = await Promise.all(
+                responesData.map(async (cotData) => {
+                    //Me retorna el objeto cotizaciones (Con codEmpresa)
+                    return ({
+                        ...cotData,
+                        empresa: empresa.codempresa
+                    });
+                })
+            );
+            // Filtrar valores nulos (en caso de cotizaciones duplicadas)
+            return savedCotizaciones;
         } catch (error) {
             console.error("Error al obtener cotizaciones:", error);
             throw new Error("Error al obtener las cotizaciones desde la API Gempresa.");
