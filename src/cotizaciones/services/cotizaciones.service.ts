@@ -78,7 +78,7 @@ export class CotizacionesService {
             // Obtengo la data
             const responeData = await lastValueFrom(response$).then((value) => value.data);
             //Verifico si existe la data
-            if (responeData.lenght === "") {
+            if (responeData.lenght === 0) {
                 throw new Error(`No se encuentran las cotizaciones.`);
             }
             // Recorro las cotizaciones en una sola peticion
