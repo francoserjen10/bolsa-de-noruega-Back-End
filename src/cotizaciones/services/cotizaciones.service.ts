@@ -32,11 +32,7 @@ export class CotizacionesService {
     async getLastDate(): Promise<string> {
         try {
             const findLasDate = await this.cotizacionModel.findOne().sort({ fecha: -1 });
-            if (findLasDate !== null) {
-                return `${findLasDate.fecha}T${findLasDate.hora}`;
-            } else {
-                return '2023-12-31T23:00';
-            }
+            return findLasDate ? `${findLasDate.fecha}T${findLasDate.hora}` : '2023-12-31T23:00';
         } catch (error) {
             console.error(error)
         }
