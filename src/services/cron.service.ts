@@ -8,10 +8,11 @@ export class CronService {
     constructor(private cotizacionesService: CotizacionesService) { }
 
     // Cada un minuto en el segundo 0
-    @Cron('0 * * * * *')
+    @Cron('1 0 * * * *')
     generarDatosHora() {
         try {
             this.cotizacionesService.updateAndSaveListCotizaciones();
+            console.log("Ejecucion cron");
         } catch {
             throw new Error('Error en ejecucion del Cron')
         }
