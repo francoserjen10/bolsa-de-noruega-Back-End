@@ -55,7 +55,16 @@ export class CotizacionesService {
                     throw new Error(`Codigo de empresa desconocido.`);
                 }
                 const cotizacionesForEmp = this.getCotizacionesByEmpresaAndDateRange(emp, itinialDate, formatedDate);
-                return cotizacionesForEmp;
+                const filteredCotizaciones = await Promise.all(
+                    (await cotizacionesForEmp).map(async (cotData) => {
+                        const exists = await this.cotizacionModel.findOne({
+                            empresa: emp,
+                            cotization: cotData.cotization,
+                        })
+                        return exists ? null : cotData;
+                    })
+                );
+                return filteredCotizaciones.filter((cot) => cot !== null);
             });
             const allSavedCotizaciones = await Promise.all(allCotizacionesPromises);
             for (const cotizaciones of allSavedCotizaciones) {
@@ -120,13 +129,4 @@ export class CotizacionesService {
 
 }
 
-
-// Se verifica si existe esta cotizacion en la base de datos
-// const existCotizacion = await this.cotizacionModel.findOne({
-//     empresa: empresa.codempresa,
-//     fecha: cotData.fecha
-// });
-// if (existCotizacion) {
-//     throw new Error(`La cotizacion para la empresa: ${cod} ya existe para la fecha ${cotData.fecha}.`);
-// }
 
