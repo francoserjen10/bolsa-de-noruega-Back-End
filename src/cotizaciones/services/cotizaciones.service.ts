@@ -29,10 +29,19 @@ export class CotizacionesService {
         }
     }
 
+    async getLastDate(): Promise<string> {
+        try {
+            const findLasDate = await this.cotizacionModel.findOne().sort({ fecha: -1 });
+            return findLasDate ? `${findLasDate.fecha}T${findLasDate.hora}` : '2023-12-31T23:00';
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
     // Guardar todas las cotizaciones de todas las empresas de una (Llamando a getCotizacionesByEmpresaAndDateRange)
     async getAllCotizaciones(): Promise<Cotizacion[][]> {
         try {
-            const itinialDate = '2023-12-31T23:00';
+            const itinialDate = await this.getLastDate();
             let newDate = new Date();
             const formatedDate = newDate.toISOString().slice(0, 16);
             const allCotizacionesPromises = empresasList.map(async (emp) => {
@@ -67,14 +76,14 @@ export class CotizacionesService {
             // Si existe, accede a la url
             const response$ = this.httpService.get(`${baseURL}/empresas/${cod}/cotizaciones?fechaDesde=${startDate}&fechaHasta=${endDate}`);
             // Obtengo la data
-            const responesData = await lastValueFrom(response$).then((value) => value.data);
+            const responeData = await lastValueFrom(response$).then((value) => value.data);
             //Verifico si existe la data
-            if (responesData.lenght === "") {
+            if (responeData.lenght === 0) {
                 throw new Error(`No se encuentran las cotizaciones.`);
             }
             // Recorro las cotizaciones en una sola peticion
             const savedCotizaciones = await Promise.all(
-                responesData.map(async (cotData) => {
+                responeData.map(async (cotData) => {
                     //Me retorna el objeto cotizaciones (Con codEmpresa)
                     return ({
                         ...cotData,
@@ -99,7 +108,7 @@ export class CotizacionesService {
                 return responesData;
             }
         } catch (error) {
-            throw new error;
+            throw new Error("Error al obtener las cotizaciones por dia y por fehca desde la API Gempresa.");
         }
     }
 
