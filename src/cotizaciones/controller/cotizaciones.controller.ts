@@ -9,9 +9,9 @@ export class CotizacionesController {
     constructor(private cotizacionesService: CotizacionesService) { }
 
     @Get()
-    async getAllCotizaciones(): Promise<Cotizacion[][]> {
+    async getNewListCotizaciones(): Promise<Cotizacion[][]> {
         try {
-            const serviceResponse = this.cotizacionesService.getAllCotizaciones();
+            const serviceResponse = this.cotizacionesService.updateAndSaveListCotizaciones();
             console.log("serviceResponse controller", serviceResponse);
             return serviceResponse;
         } catch {
