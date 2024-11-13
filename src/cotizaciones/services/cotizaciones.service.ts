@@ -21,7 +21,7 @@ export class CotizacionesService {
         try {
             // Usamos insertMany para insertar el array completo en una sola operación
             const savedCotizaciones: Cotizacion[] = await this.cotizacionModel.insertMany(cotizaciones);
-            console.log("Cotizaciones guardadas exitosamente en la base de datos.");
+            console.log("Cotizaciones guardadas exitosamente en la base de datos.", savedCotizaciones);
             return savedCotizaciones;
         } catch (error) {
             console.error("Error al guardar las cotizaciones en la base de datos:", error);
@@ -31,9 +31,12 @@ export class CotizacionesService {
 
     async getAndSumLastDate(): Promise<string> {
         try {
+            // No me da la ultima fecha
             const findLasDate = await this.cotizacionModel.findOne().sort({ fecha: -1 });
-            if (findLasDate) {
+            console.log("findLasDate", findLasDate)
+            if (findLasDate !== null) {
                 const fullDate = new Date(`${findLasDate.fecha}T${findLasDate.hora}`);
+                console.log(fullDate.setHours(fullDate.getHours() + 1))
                 fullDate.setHours(fullDate.getHours() + 1);
                 return fullDate.toISOString().slice(0, 16);
             } else {
@@ -47,7 +50,7 @@ export class CotizacionesService {
     // Guardar todas las cotizaciones de todas las empresas de una (Llamando a getCotizacionesByEmpresaAndDateRange)
     async updateAndSaveListCotizaciones(): Promise<Cotizacion[][]> {
         try {
-            const itinialDate = await this.getAndSumLastDate();
+            let itinialDate = await this.getAndSumLastDate();
             let newDate = new Date();
             const formatedDate = newDate.toISOString().slice(0, 16);
             const allCotizacionesPromises = empresasList.map(async (emp) => {
@@ -55,16 +58,7 @@ export class CotizacionesService {
                     throw new Error(`Codigo de empresa desconocido.`);
                 }
                 const cotizacionesForEmp = this.getCotizacionesByEmpresaAndDateRange(emp, itinialDate, formatedDate);
-                const filteredCotizaciones = await Promise.all(
-                    (await cotizacionesForEmp).map(async (cotData) => {
-                        const exists = await this.cotizacionModel.findOne({
-                            empresa: emp,
-                            cotization: cotData.cotization,
-                        })
-                        return exists ? null : cotData;
-                    })
-                );
-                return filteredCotizaciones.filter((cot) => cot !== null);
+                return cotizacionesForEmp;
             });
             const allSavedCotizaciones = await Promise.all(allCotizacionesPromises);
             for (const cotizaciones of allSavedCotizaciones) {
