@@ -39,7 +39,7 @@ export class CotizacionesService {
     }
 
     // Guardar todas las cotizaciones de todas las empresas de una (Llamando a getCotizacionesByEmpresaAndDateRange)
-    async getAllCotizaciones(): Promise<Cotizacion[][]> {
+    async updateAndSaveListCotizaciones(): Promise<Cotizacion[][]> {
         try {
             const itinialDate = await this.getLastDate();
             let newDate = new Date();
