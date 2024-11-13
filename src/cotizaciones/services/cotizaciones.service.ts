@@ -29,19 +29,25 @@ export class CotizacionesService {
         }
     }
 
-    async getLastDate(): Promise<string> {
+    async getAndSumLastDate(): Promise<string> {
         try {
             const findLasDate = await this.cotizacionModel.findOne().sort({ fecha: -1 });
-            return findLasDate ? `${findLasDate.fecha}T${findLasDate.hora}` : '2023-12-31T23:00';
-        } catch (error) {
-            console.error(error)
+            if (findLasDate) {
+                const fullDate = new Date(`${findLasDate.fecha}T${findLasDate.hora}`);
+                fullDate.setHours(fullDate.getHours() + 1);
+                return fullDate.toISOString().slice(0, 16);
+            } else {
+                return '2023-12-31T23:00';
+            }
+        } catch {
+            throw new Error('Error al obtener la fecha de la ultima cotizacion');
         }
     }
 
     // Guardar todas las cotizaciones de todas las empresas de una (Llamando a getCotizacionesByEmpresaAndDateRange)
     async updateAndSaveListCotizaciones(): Promise<Cotizacion[][]> {
         try {
-            const itinialDate = await this.getLastDate();
+            const itinialDate = await this.getAndSumLastDate();
             let newDate = new Date();
             const formatedDate = newDate.toISOString().slice(0, 16);
             const allCotizacionesPromises = empresasList.map(async (emp) => {
