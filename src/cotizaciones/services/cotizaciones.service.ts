@@ -16,30 +16,38 @@ export class CotizacionesService {
         @InjectModel(Empresa.name) private empresaModel: Model<Empresa>,
         private readonly httpService: HttpService) { }
 
+    // Método auxiliar para guardar un conjunto de cotizaciones en mi db de MongoDB
+    private async saveCotizacionesToDatabase(cotizaciones: Cotizacion[]): Promise<Cotizacion[]> {
+        try {
+            // Usamos insertMany para insertar el array completo en una sola operación
+            const savedCotizaciones: Cotizacion[] = await this.cotizacionModel.insertMany(cotizaciones);
+            console.log("Cotizaciones guardadas exitosamente en la base de datos.");
+            return savedCotizaciones;
+        } catch (error) {
+            console.error("Error al guardar las cotizaciones en la base de datos:", error);
+            throw new Error("No se pudo guardar las cotizaciones en la base de datos.");
+        }
+    }
+
+    // Guardar todas las cotizaciones de todas las empresas de una (Llamando a getCotizacionesByEmpresaAndDateRange)
     async getAllCotizaciones(): Promise<Cotizacion[][]> {
         try {
+            const itinialDate = '2023-12-31T23:00';
+            let newDate = new Date();
+            const formatedDate = newDate.toISOString().slice(0, 16);
             const allCotizacionesPromises = empresasList.map(async (emp) => {
                 if (emp === '') {
                     throw new Error(`Codigo de empresa desconocido.`);
                 }
-                const itinialDate = '2023-12-31T23:00';
-                let newDate = new Date();
-                const formatedDate = newDate.toISOString().slice(0, 16);
                 const cotizacionesForEmp = this.getCotizacionesByEmpresaAndDateRange(emp, itinialDate, formatedDate);
-                if (!cotizacionesForEmp) {
-                    throw new Error(`Las cotizaciones no existen.`);
-                }
-                const savedCotizaciones = await Promise.all(
-                    (await cotizacionesForEmp).map(async (cot) => {
-                        const newCotizacion = new this.cotizacionModel({
-                            ...cot
-                        });
-                        return await newCotizacion.save();
-                    })
-                )
-                return savedCotizaciones;
+                return cotizacionesForEmp;
             });
             const allSavedCotizaciones = await Promise.all(allCotizacionesPromises);
+            for (const cotizaciones of allSavedCotizaciones) {
+                if (cotizaciones.length > 0) {
+                    await this.saveCotizacionesToDatabase(cotizaciones)
+                }
+            }
             return allSavedCotizaciones;
         } catch (error) {
             console.error("Error, no se pudieron obtener todas las cotizaciones de todas las empresas:", error);
