@@ -108,6 +108,22 @@ export class CotizacionesService {
         }
     }
 
+    async getCotizacionesByDateAndHour(cod: string, date: string, hour: string): Promise<Cotizacion[]> {
+        try {
+            const allCotizacionesForHour = this.cotizacionModel.find({
+                empresa: cod,
+                fecha: date,
+                hora: hour
+            });
+            if (!allCotizacionesForHour === null) {
+                throw new Error(`No se pudo obtener las cotizaciones del ${date} a las ${hour}`);
+            }
+            return allCotizacionesForHour;
+        } catch (error) {
+            throw new Error("Error al obtener las cotizaciones por dia y por fehca desde MongoDB.");
+        }
+    }
+
     async getCotizacionByDateAndHour(cod: string, date: string, hour: string) {
         try {
             const response$ = this.httpService.get(`${baseURL}/empresas/${cod}/cotizacion?fecha=${date}&hora=${hour}`);
@@ -123,4 +139,4 @@ export class CotizacionesService {
 
 }
 
-
+//
