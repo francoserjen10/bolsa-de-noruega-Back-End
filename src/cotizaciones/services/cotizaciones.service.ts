@@ -108,35 +108,37 @@ export class CotizacionesService {
         }
     }
 
-    async getCotizacionesByDateAndHour(cod: string, date: string, hour: string): Promise<Cotizacion[]> {
+    async getLastCotizacionOfAllEmpresas(): Promise<Cotizacion[][]> {
         try {
-            const allCotizacionesForHour = this.cotizacionModel.find({
+            const findLasDate = await this.cotizacionModel.findOne().sort({ fecha: -1, hora: -1 });
+            const allCotizacionesPromises = await Promise.all(empresasList.map(async (codEmp) => {
+                if (codEmp === '') {
+                    throw new Error(`Codigo de empresa desconocido.`);
+                }
+                return await this.getCotizacionByDateAndHour(codEmp, findLasDate.fecha, findLasDate.hora);
+            }));
+            return allCotizacionesPromises;
+        } catch (error) {
+            console.error("Error al obtener ultimas cotizaciones:", error);
+            throw new Error("Ocurrio un error al obtener las ultimas cotizaciones de las empresas");
+        }
+    }
+
+    async getCotizacionByDateAndHour(cod: string, date: string, hour: string): Promise<Cotizacion[]> {
+        try {
+            const allCotizacionForHour = await this.cotizacionModel.find({
                 empresa: cod,
                 fecha: date,
                 hora: hour
             });
-            if (!allCotizacionesForHour === null) {
+            if (!allCotizacionForHour === null) {
                 throw new Error(`No se pudo obtener las cotizaciones del ${date} a las ${hour}`);
             }
-            return allCotizacionesForHour;
+            return allCotizacionForHour;
         } catch (error) {
             throw new Error("Error al obtener las cotizaciones por dia y por fehca desde MongoDB.");
         }
     }
-
-    async getCotizacionByDateAndHour(cod: string, date: string, hour: string) {
-        try {
-            const response$ = this.httpService.get(`${baseURL}/empresas/${cod}/cotizacion?fecha=${date}&hora=${hour}`);
-            if (response$) {
-                const responesData = await lastValueFrom(response$).then((value) => value.data);
-                console.log("responesData", responesData);
-                return responesData;
-            }
-        } catch (error) {
-            throw new Error("Error al obtener las cotizaciones por dia y por fehca desde la API Gempresa.");
-        }
-    }
-
 }
 
 //
