@@ -8,12 +8,14 @@ export class CronService {
     constructor(private cotizacionesService: CotizacionesService) { }
 
     // Cada un minuto en el segundo 0
-    @Cron('1 0 * * * *')
-    generarDatosHora() {
+    @Cron('5 0 * * * *')
+    async generarDatosHora() {
         try {
-            this.cotizacionesService.updateAndSaveListCotizaciones();
+            await this.cotizacionesService.updateAndSaveListCotizaciones();
+            await this.cotizacionesService.getLastCotizacionOfAllEmpresas();
             console.log("Ejecucion cron");
-        } catch {
+        } catch (error) {
+            console.error('Error en la ejecución del Cron:', error);
             throw new Error('Error en ejecucion del Cron')
         }
     }
