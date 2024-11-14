@@ -21,7 +21,7 @@ export class CotizacionesService {
         try {
             // Usamos insertMany para insertar el array completo en una sola operación
             const savedCotizaciones: Cotizacion[] = await this.cotizacionModel.insertMany(cotizaciones);
-            console.log("Cotizaciones guardadas exitosamente en la base de datos.");
+            console.log("Cotizaciones guardadas exitosamente en la base de datos.", savedCotizaciones);
             return savedCotizaciones;
         } catch (error) {
             console.error("Error al guardar las cotizaciones en la base de datos:", error);
@@ -31,23 +31,45 @@ export class CotizacionesService {
 
     async getAndSumLastDate(): Promise<string> {
         try {
-            const findLasDate = await this.cotizacionModel.findOne().sort({ fecha: -1 });
-            if (findLasDate) {
-                const fullDate = new Date(`${findLasDate.fecha}T${findLasDate.hora}`);
-                fullDate.setHours(fullDate.getHours() + 1);
-                return fullDate.toISOString().slice(0, 16);
-            } else {
+            const findLasDate = await this.cotizacionModel.findOne().sort({ fecha: -1, hora: -1 });
+            if (findLasDate === null) {
                 return '2023-12-31T23:00';
+            } else {
+                // Construye el objeto Date de manera explícita en UTC
+                const [year, month, day] = findLasDate.fecha.split('-').map(Number);
+                const [hours, minutes] = findLasDate.hora.split(':').map(Number);
+                const fullDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+                const endTime = new Date(fullDate.getTime() + 60 * 60 * 1000);
+                return endTime.toISOString().slice(0, 16);
             }
         } catch {
             throw new Error('Error al obtener la fecha de la ultima cotizacion');
         }
     }
 
+    // //Por aca esta el problema siguiente
+    // async verifyIfExistCotizaciones(cotizaciones: Cotizacion[]): Promise<Cotizacion[] | null> {
+    //     const filteredCotizaciones = await Promise.all(cotizaciones.map(async (cot) => {
+    //         const existCotizacion = this.cotizacionModel.findOne({
+    //             id: cot.id,
+    //             fecha: cot.fecha,
+    //             hora: cot.hora,
+    //             dateUTC: cot.dateUTC,
+    //             cotization: cot.cotization,
+    //             empresa: cot.empresa
+    //         });
+    //         if (existCotizacion) {
+    //             return null;
+    //         }
+    //         return cot;
+    //     }));
+    //     return filteredCotizaciones;
+    // }
+
     // Guardar todas las cotizaciones de todas las empresas de una (Llamando a getCotizacionesByEmpresaAndDateRange)
     async updateAndSaveListCotizaciones(): Promise<Cotizacion[][]> {
         try {
-            const itinialDate = await this.getAndSumLastDate();
+            let itinialDate = await this.getAndSumLastDate();
             let newDate = new Date();
             const formatedDate = newDate.toISOString().slice(0, 16);
             const allCotizacionesPromises = empresasList.map(async (emp) => {
@@ -55,16 +77,9 @@ export class CotizacionesService {
                     throw new Error(`Codigo de empresa desconocido.`);
                 }
                 const cotizacionesForEmp = this.getCotizacionesByEmpresaAndDateRange(emp, itinialDate, formatedDate);
-                const filteredCotizaciones = await Promise.all(
-                    (await cotizacionesForEmp).map(async (cotData) => {
-                        const exists = await this.cotizacionModel.findOne({
-                            empresa: emp,
-                            cotization: cotData.cotization,
-                        })
-                        return exists ? null : cotData;
-                    })
-                );
-                return filteredCotizaciones.filter((cot) => cot !== null);
+                // const verifedCotizaciones = this.verifyIfExistCotizaciones(await cotizacionesForEmp);
+                // return verifedCotizaciones;
+                return cotizacionesForEmp;
             });
             const allSavedCotizaciones = await Promise.all(allCotizacionesPromises);
             for (const cotizaciones of allSavedCotizaciones) {
