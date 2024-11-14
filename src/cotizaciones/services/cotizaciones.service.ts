@@ -31,21 +31,40 @@ export class CotizacionesService {
 
     async getAndSumLastDate(): Promise<string> {
         try {
-            // No me da la ultima fecha
-            const findLasDate = await this.cotizacionModel.findOne().sort({ fecha: -1 });
-            console.log("findLasDate", findLasDate)
-            if (findLasDate !== null) {
-                const fullDate = new Date(`${findLasDate.fecha}T${findLasDate.hora}`);
-                console.log(fullDate.setHours(fullDate.getHours() + 1))
-                fullDate.setHours(fullDate.getHours() + 1);
-                return fullDate.toISOString().slice(0, 16);
-            } else {
+            const findLasDate = await this.cotizacionModel.findOne().sort({ fecha: -1, hora: -1 });
+            if (findLasDate === null) {
                 return '2023-12-31T23:00';
+            } else {
+                // Construye el objeto Date de manera explícita en UTC
+                const [year, month, day] = findLasDate.fecha.split('-').map(Number);
+                const [hours, minutes] = findLasDate.hora.split(':').map(Number);
+                const fullDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+                const endTime = new Date(fullDate.getTime() + 60 * 60 * 1000);
+                return endTime.toISOString().slice(0, 16);
             }
         } catch {
             throw new Error('Error al obtener la fecha de la ultima cotizacion');
         }
     }
+
+    // //Por aca esta el problema siguiente
+    // async verifyIfExistCotizaciones(cotizaciones: Cotizacion[]): Promise<Cotizacion[] | null> {
+    //     const filteredCotizaciones = await Promise.all(cotizaciones.map(async (cot) => {
+    //         const existCotizacion = this.cotizacionModel.findOne({
+    //             id: cot.id,
+    //             fecha: cot.fecha,
+    //             hora: cot.hora,
+    //             dateUTC: cot.dateUTC,
+    //             cotization: cot.cotization,
+    //             empresa: cot.empresa
+    //         });
+    //         if (existCotizacion) {
+    //             return null;
+    //         }
+    //         return cot;
+    //     }));
+    //     return filteredCotizaciones;
+    // }
 
     // Guardar todas las cotizaciones de todas las empresas de una (Llamando a getCotizacionesByEmpresaAndDateRange)
     async updateAndSaveListCotizaciones(): Promise<Cotizacion[][]> {
@@ -58,6 +77,8 @@ export class CotizacionesService {
                     throw new Error(`Codigo de empresa desconocido.`);
                 }
                 const cotizacionesForEmp = this.getCotizacionesByEmpresaAndDateRange(emp, itinialDate, formatedDate);
+                // const verifedCotizaciones = this.verifyIfExistCotizaciones(await cotizacionesForEmp);
+                // return verifedCotizaciones;
                 return cotizacionesForEmp;
             });
             const allSavedCotizaciones = await Promise.all(allCotizacionesPromises);
