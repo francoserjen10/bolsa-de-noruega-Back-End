@@ -47,25 +47,6 @@ export class CotizacionesService {
         }
     }
 
-    // //Por aca esta el problema siguiente
-    // async verifyIfExistCotizaciones(cotizaciones: Cotizacion[]): Promise<Cotizacion[] | null> {
-    //     const filteredCotizaciones = await Promise.all(cotizaciones.map(async (cot) => {
-    //         const existCotizacion = this.cotizacionModel.findOne({
-    //             id: cot.id,
-    //             fecha: cot.fecha,
-    //             hora: cot.hora,
-    //             dateUTC: cot.dateUTC,
-    //             cotization: cot.cotization,
-    //             empresa: cot.empresa
-    //         });
-    //         if (existCotizacion) {
-    //             return null;
-    //         }
-    //         return cot;
-    //     }));
-    //     return filteredCotizaciones;
-    // }
-
     // Guardar todas las cotizaciones de todas las empresas de una (Llamando a getCotizacionesByEmpresaAndDateRange)
     async updateAndSaveListCotizaciones(): Promise<Cotizacion[][]> {
         try {
@@ -77,8 +58,6 @@ export class CotizacionesService {
                     throw new Error(`Codigo de empresa desconocido.`);
                 }
                 const cotizacionesForEmp = this.getCotizacionesByEmpresaAndDateRange(emp, itinialDate, formatedDate);
-                // const verifedCotizaciones = this.verifyIfExistCotizaciones(await cotizacionesForEmp);
-                // return verifedCotizaciones;
                 return cotizacionesForEmp;
             });
             const allSavedCotizaciones = await Promise.all(allCotizacionesPromises);
