@@ -41,7 +41,7 @@ export class CotizacionesController {
         }
     }
 
-    @Get('last-cot-by-date-and-hour')
+    @Get('last-cot')
     async getlastCotizacionesByDateAndHour(): Promise<Cotizacion[][]> {
         try {
             const respones = this.cotizacionesService.getLastCotizacionOfAllEmpresas();
