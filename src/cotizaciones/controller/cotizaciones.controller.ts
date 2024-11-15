@@ -31,9 +31,20 @@ export class CotizacionesController {
     }
 
     @Get('by-date-and-hour/:cod/:date/:hour')
-    async getCotizacionesByDateAndHour(@Param('cod') cod: string, @Param('date') date: string, @Param('hour') hour: string): Promise<Cotizacion> {
+    async getCotizacionByDateAndHour(@Param('cod') cod: string, @Param('date') date: string, @Param('hour') hour: string): Promise<Cotizacion[]> {
         try {
             const respones = this.cotizacionesService.getCotizacionByDateAndHour(cod, date, hour);
+            console.log("controller", respones);
+            return respones;
+        } catch {
+            throw error;
+        }
+    }
+
+    @Get('last-cot-by-date-and-hour')
+    async getlastCotizacionesByDateAndHour(): Promise<Cotizacion[][]> {
+        try {
+            const respones = this.cotizacionesService.getLastCotizacionOfAllEmpresas();
             console.log("controller", respones);
             return respones;
         } catch {
