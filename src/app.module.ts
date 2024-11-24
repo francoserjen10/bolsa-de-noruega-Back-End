@@ -13,6 +13,8 @@ import { CotizacionesController } from './cotizaciones/controller/cotizaciones.c
 import { CotizacionesService } from './cotizaciones/services/cotizaciones.service';
 import { Cotizacion, CotizacionSchema } from './cotizaciones/models/schemas/cotizacion';
 import { CronService } from './services/cron.service';
+import { IndiceController } from './indices/controllers/indice.controller';
+import { IndiceService } from './indices/services/indice.service';
 
 @Module({
   imports: [
@@ -31,8 +33,8 @@ import { CronService } from './services/cron.service';
     ]),
     HttpModule,
   ],
-  controllers: [AppController, EmpresaController, CotizacionesController],
-  providers: [AppService, EmpresaService, CotizacionesService, CronService],
+  controllers: [AppController, EmpresaController, CotizacionesController, IndiceController],
+  providers: [AppService, EmpresaService, CotizacionesService, CronService, IndiceService],
   exports: []
 })
 export class AppModule { }
