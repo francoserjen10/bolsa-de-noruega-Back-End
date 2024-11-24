@@ -108,37 +108,18 @@ export class CotizacionesService {
         }
     }
 
-    async getLastCotizacionOfAllEmpresas(): Promise<Cotizacion[][]> {
+    async getCotizacionesInLocal(cod: string): Promise<Cotizacion[]> {
         try {
-            const findLasDate = await this.cotizacionModel.findOne().sort({ fecha: -1, hora: -1 });
-            const allCotizacionesPromises = await Promise.all(empresasList.map(async (codEmp) => {
-                if (codEmp === '') {
-                    throw new Error(`Codigo de empresa desconocido.`);
-                }
-                return await this.getCotizacionByDateAndHour(codEmp, findLasDate.fecha, findLasDate.hora);
-            }));
-            return allCotizacionesPromises;
-        } catch (error) {
-            console.error("Error al obtener ultimas cotizaciones:", error);
-            throw new Error("Ocurrio un error al obtener las ultimas cotizaciones de las empresas");
-        }
-    }
-
-    async getCotizacionByDateAndHour(cod: string, date: string, hour: string): Promise<Cotizacion[]> {
-        try {
-            const allCotizacionForHour = await this.cotizacionModel.find({
+            const allCotizaciones = await this.cotizacionModel.find({
                 empresa: cod,
-                fecha: date,
-                hora: hour
             });
-            if (!allCotizacionForHour === null) {
-                throw new Error(`No se pudo obtener las cotizaciones del ${date} a las ${hour}`);
+            if (!allCotizaciones === null) {
+                throw new Error(`No se pudo obtener las cotizaciones de ${cod}`);
             }
-            return allCotizacionForHour;
+            console.log("allCotizaciones-service", allCotizaciones)
+            return allCotizaciones;
         } catch (error) {
-            throw new Error("Error al obtener las cotizaciones por dia y por fehca desde MongoDB.");
+            throw new Error(`Error al obtener las cotizaciones de: ${cod} desde MongoDB.`);
         }
     }
 }
-
-//
