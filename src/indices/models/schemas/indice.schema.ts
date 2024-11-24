@@ -12,4 +12,4 @@ export class Indice {
     @Prop({ required: true })
     name: string;
 }
-export const EmpresaSchema = SchemaFactory.createForClass(Indice);
+export const IndiceSchema = SchemaFactory.createForClass(Indice);
