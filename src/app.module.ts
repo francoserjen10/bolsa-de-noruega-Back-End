@@ -15,6 +15,7 @@ import { Cotizacion, CotizacionSchema } from './cotizaciones/models/schemas/coti
 import { CronService } from './services/cron.service';
 import { IndiceController } from './indices/controllers/indice.controller';
 import { IndiceService } from './indices/services/indice.service';
+import { Indice, IndiceSchema } from './indices/models/schemas/indice.schema';
 
 @Module({
   imports: [
@@ -29,7 +30,11 @@ import { IndiceService } from './indices/services/indice.service';
       {
         name: Cotizacion.name,
         schema: CotizacionSchema
-      }
+      },
+      {
+        name: Indice.name,
+        schema: IndiceSchema
+      },
     ]),
     HttpModule,
   ],
