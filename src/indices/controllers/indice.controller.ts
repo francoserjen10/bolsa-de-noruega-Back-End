@@ -1,4 +1,4 @@
-import { Body, Controller, HttpException, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Post } from '@nestjs/common';
 import { IIndice } from '../models/interface/indice.interface';
 import { IndiceService } from '../services/indice.service';
 
@@ -30,6 +30,22 @@ export class IndiceController {
                 status: HttpStatus.BAD_REQUEST,
                 error: error.message || 'Error al publicar el índice',
             }, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @Get()
+    async getAllIndicesOfGempresa(): Promise<IIndice[]> {
+        try {
+            return await this.indiceService.getAllIndicesOfGempresa();
+        } catch (error) {
+            console.error("Error en el controlador:", error.message);
+            throw new HttpException(
+                {
+                    status: HttpStatus.BAD_REQUEST,
+                    error: error.message || 'Error al obtener los índices',
+                },
+                HttpStatus.BAD_REQUEST,
+            );
         }
     }
 }
