@@ -5,7 +5,7 @@ import { Indice } from '../models/schemas/indice.schema';
 import { Model } from 'mongoose';
 import { HttpService } from '@nestjs/axios';
 import { baseURL } from 'src/axios/config.gempresa';
-import { lastValueFrom } from 'rxjs';
+import { forkJoin, lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class IndiceService {
@@ -43,6 +43,32 @@ export class IndiceService {
                 `Error de Gempresa: ${error.response.data?.message || error.message}`
             }
             throw new Error("Error al publicar mi indice.");
+        }
+    }
+
+    async getAllIndicesOfGempresa(): Promise<IIndice[]> {
+        try {
+            const response = await lastValueFrom(this.httpService.get(`${baseURL}/indices`));
+            if (!response || !response.data) {
+                throw new Error('No se recibieron índices desde Gempresa');
+            }
+            const indicesWithValues: IIndice[] = response.data.filter((i: IIndice) => i.name && i.code);
+            const savedIndices = await Promise.all(
+                indicesWithValues.map(async (i: IIndice) => {
+                    const existingIndice = await this.indiceModel.findOne({ code: i.code, name: i.name });
+                    if (existingIndice) {
+                        console.log(`Índice ya existe en la base de datos: ${i.code}`);
+                        return null
+                    }
+                    const newIndice = new this.indiceModel(i);
+                    const savedIndice = await newIndice.save();
+                    return savedIndice;
+                })
+            );
+            return savedIndices.filter(savedIndice => savedIndice !== null);
+        } catch (error) {
+            console.error("Error al guardar los índices en MongoDB:", error.message);
+            throw new Error("Error al guardar los índices en MongoDB.");
         }
     }
 }
