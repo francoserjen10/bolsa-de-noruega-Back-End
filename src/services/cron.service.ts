@@ -9,10 +9,9 @@ export class CronService {
 
     // Cada un minuto en el segundo 0
     @Cron('5 0 * * * *')
-    async generarDatosHora() {
+    async generateDataEveryHour() {
         try {
             await this.cotizacionesService.updateAndSaveListCotizaciones();
-            await this.cotizacionesService.getLastCotizacionOfAllEmpresas();
             console.log("Ejecucion cron");
         } catch (error) {
             console.error('Error en la ejecución del Cron:', error);
