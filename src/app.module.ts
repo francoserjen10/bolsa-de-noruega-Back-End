@@ -16,6 +16,7 @@ import { CronService } from './services/cron.service';
 import { IndiceController } from './indices/controllers/indice.controller';
 import { IndiceService } from './indices/services/indice.service';
 import { Indice, IndiceSchema } from './indices/models/schemas/indice.schema';
+import { ValueIndice, ValueIndiceSchema } from './indices/models/schemas/value-indice';
 
 @Module({
   imports: [
@@ -34,6 +35,10 @@ import { Indice, IndiceSchema } from './indices/models/schemas/indice.schema';
       {
         name: Indice.name,
         schema: IndiceSchema
+      },
+      {
+        name: ValueIndice.name,
+        schema: ValueIndiceSchema
       },
     ]),
     HttpModule,

@@ -4,4 +4,5 @@ export interface ICotizacion {
     hora: string;
     dateUTC: string;
     cotization: number;
+    empresa: string;
 }
