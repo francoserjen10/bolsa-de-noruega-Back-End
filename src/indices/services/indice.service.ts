@@ -23,12 +23,12 @@ export class IndiceService {
 
     async getAllMyIndicesBursatiles(): Promise<IValueIndice[]> {
         try {
-            const allIndices: IValueIndice[] = await this.valueIndiceModel.find();
-            console.log('allIndices', allIndices);
-            if (allIndices.length <= 0) {
+            const allMyIndicesBursatiles: IValueIndice[] = await this.valueIndiceModel.find();
+            console.log('allIndices', allMyIndicesBursatiles);
+            if (allMyIndicesBursatiles.length <= 0) {
                 throw new Error("No se encontraron índices bursátiles en la base de datos.");
             }
-            return allIndices;
+            return allMyIndicesBursatiles;
         } catch (error) {
             console.error("Error al traer los valores del indice bursatil", error);
             throw new Error("Error al obtener mis indices bursatiles.");
