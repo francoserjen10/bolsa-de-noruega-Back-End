@@ -21,6 +21,80 @@ export class IndiceService {
         @InjectModel(ValueIndice.name) private valueIndiceModel: Model<ValueIndice>
     ) { }
 
+    async getAllMyIndicesBursatiles(): Promise<IValueIndice[]> {
+        try {
+            const allMyIndicesBursatiles: IValueIndice[] = await this.valueIndiceModel.find();
+            console.log('allIndices', allMyIndicesBursatiles);
+            if (allMyIndicesBursatiles.length <= 0) {
+                throw new Error("No se encontraron índices bursátiles en la base de datos.");
+            }
+            return allMyIndicesBursatiles;
+        } catch (error) {
+            console.error("Error al traer los valores del indice bursatil", error);
+            throw new Error("Error al obtener mis indices bursatiles.");
+        }
+    }
+
+    async verifyIfExistIndice(): Promise<ICotizacion[]> {
+        try {
+            const lastIndice = await this.valueIndiceModel.findOne().sort({ fechaDate: -1 });
+            if (lastIndice === null) {
+                const allCotizaciones: ICotizacion[] = await this.cotizacionModel.find();
+                if (!allCotizaciones.length) {
+                    console.log("No hay cotizaciones disponibles en la base de datos.");
+                    return [];
+                }
+                this.calculateIndiceBursatil(allCotizaciones, "BRN");
+            } else {
+                const calculatedCotizacion = await this.cotizacionModel.findOne({ fecha: lastIndice.fecha, hora: lastIndice.hora });
+                if (calculatedCotizacion) {
+                    const cotizacionesToCalculate: ICotizacion[] = await this.cotizacionModel.find({
+                        $or: [
+                            {
+                                fecha: { $gt: lastIndice.fecha }
+                            },
+                            {
+                                fecha: lastIndice.fecha,
+                                hora: { $gt: lastIndice.hora }
+                            }
+                        ]
+                    });
+                    this.calculateIndiceBursatil(cotizacionesToCalculate, "BRN");
+                }
+            }
+        } catch (error) {
+            console.error("Error en verifyIfExistIndice:", error);
+            throw new Error("Error al verificar si existen índices.");
+        }
+    }
+
+    async calculateIndiceBursatil(cotizaciones: ICotizacion[], indice: string): Promise<IValueIndice[]> {
+        const cotizacionesByDayAndHour: Record<string, number[]> = cotizaciones.reduce((acc, cotizacion) => {
+            const dateTime: string = `${cotizacion.fecha} ${cotizacion.hora}`;
+            if (!acc[dateTime]) {
+                acc[dateTime] = [];
+            }
+            acc[dateTime].push(cotizacion.cotization);
+            return acc;
+        }, {} as Record<string, number[]>);
+        const indicesByHour = Object.keys(cotizacionesByDayAndHour).map(fechaHora => {
+            const [fecha, hora] = fechaHora.split(" ");
+            const sumCotizaciones = cotizacionesByDayAndHour[fechaHora].reduce((acc, curr) => acc + curr, 0);
+            const amountOfCotizaciones = cotizacionesByDayAndHour[fechaHora].length;
+            const value = parseFloat((sumCotizaciones / amountOfCotizaciones).toFixed(2));
+            return {
+                valor: value,
+                fecha,
+                hora,
+                fechaDate: new Date(`${fecha}T${hora}:00Z`),
+                codIndice: indice
+            };
+        });
+        const savedIndices: IValueIndice[] = await this.valueIndiceModel.insertMany(indicesByHour);
+        console.log("Índices calculados y guardados:", savedIndices);
+        return savedIndices;
+    }
+
     async createIndice(indice: IIndice): Promise<IIndice> {
         try {
             if (!indice.code || !indice.name) {
@@ -79,65 +153,5 @@ export class IndiceService {
             console.error("Error al guardar los índices en MongoDB:", error.message);
             throw new Error("Error al guardar los índices en MongoDB.");
         }
-    }
-
-    async verifyIfExistIndice(): Promise<ICotizacion[]> {
-        try {
-            const ultimoIndice = await this.valueIndiceModel.findOne().sort({ fechaDate: -1 });
-            if (ultimoIndice === null) {
-                const allCotizaciones: ICotizacion[] = await this.cotizacionModel.find();
-                if (!allCotizaciones.length) {
-                    console.log("No hay cotizaciones disponibles en la base de datos.");
-                    return [];
-                }
-                this.calcularIndiceBursatil(allCotizaciones, "BRN");
-            } else {
-                const calculatedCotizacion = await this.cotizacionModel.findOne({ fecha: ultimoIndice.fecha, hora: ultimoIndice.hora });
-                if (calculatedCotizacion) {
-                    const cotizacionesToCalculate: ICotizacion[] = await this.cotizacionModel.find({
-                        $or: [
-                            {
-                                fecha: { $gt: ultimoIndice.fecha }
-                            },
-                            {
-                                fecha: ultimoIndice.fecha,
-                                hora: { $gt: ultimoIndice.hora }
-                            }
-                        ]
-                    });
-                    this.calcularIndiceBursatil(cotizacionesToCalculate, "BRN");
-                }
-            }
-        } catch (error) {
-            console.error("Error en verifyIfExistIndice:", error);
-            throw new Error("Error al verificar si existen índices.");
-        }
-    }
-
-    async calcularIndiceBursatil(cotizaciones: ICotizacion[], indice: string): Promise<IValueIndice[]> {
-        const cotizacionesPorDiaYHora: Record<string, number[]> = cotizaciones.reduce((acc, cotizacion) => {
-            const fechaHora: string = `${cotizacion.fecha} ${cotizacion.hora}`;
-            if (!acc[fechaHora]) {
-                acc[fechaHora] = [];
-            }
-            acc[fechaHora].push(cotizacion.cotization);
-            return acc;
-        }, {} as Record<string, number[]>);
-        const indicesPorHora = Object.keys(cotizacionesPorDiaYHora).map(fechaHora => {
-            const [fecha, hora] = fechaHora.split(" ");
-            const sumaCotizaciones = cotizacionesPorDiaYHora[fechaHora].reduce((acc, curr) => acc + curr, 0);
-            const cantidadCotizaciones = cotizacionesPorDiaYHora[fechaHora].length;
-            const valor = parseFloat((sumaCotizaciones / cantidadCotizaciones).toFixed(2));
-            return {
-                valor,
-                fecha,
-                hora,
-                fechaDate: new Date(`${fecha}T${hora}:00Z`),
-                codIndice: indice
-            };
-        });
-        const savedIndices: IValueIndice[] = await this.valueIndiceModel.insertMany(indicesPorHora);
-        console.log("Índices calculados y guardados:", savedIndices);
-        return savedIndices;
     }
 }
