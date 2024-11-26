@@ -24,25 +24,20 @@ export class IndiceService {
     async postIndiceBursatilInGempresa(): Promise<IValueIndice[]> {
         try {
             const allIndicesBursatilLocal: IValueIndice[] = await this.getAllMyIndicesBursatiles();
-            console.log("allIndicesBursatilLocal", allIndicesBursatilLocal);
             if (!allIndicesBursatilLocal.length) {
                 console.log("No hay índices bursátiles en local para enviar.");
                 return [];
             }
-
             const missingIndices: IValueIndice[] = await this.filterIndicesBursatilesMissing(allIndicesBursatilLocal);
             if (!missingIndices.length) {
                 console.log("No hay índices bursátiles faltantes para enviar.");
                 return [];
             }
-
             const batchSize = 50;
             const batches = [];
-
             for (let i = 0; i < missingIndices.length; i += batchSize) {
                 batches.push(missingIndices.slice(i, i + batchSize));
             }
-
             const savedIndicesBursatiles: IValueIndice[] = [];
             for (const batch of batches) {
                 const batchResults = await Promise.all(batch.map(async (indBur) => {
@@ -52,16 +47,13 @@ export class IndiceService {
                         codigoIndice: indBur.codigoIndice,
                         valorIndice: indBur.valorIndice
                     };
-
                     const response = this.httpService.post(`${baseURL}/indices/cotizaciones`, createIndice);
                     const responeData = await lastValueFrom(response).then((value) => value.data);
-                    console.log("responeData", responeData);
                     return responeData;
                 })
                 );
                 savedIndicesBursatiles.push(...batchResults);
             }
-            console.log("savedIndicesBursatiles", savedIndicesBursatiles);
             return savedIndicesBursatiles;
         } catch (error) {
             console.error("Error al enviar índices bursátiles:", error);
@@ -76,7 +68,6 @@ export class IndiceService {
     async getAllMyIndicesBursatiles(): Promise<IValueIndice[]> {
         try {
             const allMyIndicesBursatiles: IValueIndice[] = await this.valueIndiceModel.find();
-            console.log('allIndices', allMyIndicesBursatiles);
             if (allMyIndicesBursatiles.length <= 0) {
                 throw new Error("No se encontraron índices bursátiles en la base de datos.");
             }
@@ -93,11 +84,7 @@ export class IndiceService {
             const existingIngices: IValueIndice[] = await lastValueFrom(
                 this.httpService.get(`http://ec2-54-145-211-254.compute-1.amazonaws.com:3000/indices/BRN/cotizaciones?fechaDesde=2024-01-01T01%3A00&fechaHasta=2025-01-01T00%3A00`)
             ).then((res) => res.data);
-            console.log("indicesExistentes", existingIngices);
-
             const missingIndices: IValueIndice[] = allIndicesBursatilLocal.filter((indicelocal) => !existingIngices.some((indiceGempresa) => indiceGempresa.hora === indicelocal.hora && indiceGempresa.fecha === indicelocal.fecha));
-            console.log("missingIndices", missingIndices)
-
             if (!missingIndices.length) {
                 console.log("No hay índices nuevos para enviar.");
                 return [];
@@ -165,7 +152,6 @@ export class IndiceService {
                 acc[dateTime].push(cotizacion.cotization);
                 return acc;
             }, {} as Record<string, number[]>);
-
             const indicesByHour: IValueIndice[] = Object.keys(cotizacionesByDayAndHour).map(fechaHora => {
                 const [fecha, hora] = fechaHora.split(" ");
                 const sumCotizaciones = cotizacionesByDayAndHour[fechaHora].reduce((acc, curr) => acc + curr, 0);
@@ -180,7 +166,6 @@ export class IndiceService {
                 };
             });
             return this.saveIndicesBursatilesToDatabase(indicesByHour)
-
         } catch (error) {
             console.error("Error al calcular o guardar los índices:", error);
             throw new Error("Error al procesar las cotizaciones y enviar los índices.");

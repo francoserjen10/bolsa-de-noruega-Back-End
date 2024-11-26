@@ -58,43 +58,4 @@ export class IndiceController {
             );
         }
     }
-
-    
-    // @Post('post-indice-bursatil-in-gempresa')
-    // async createIndiceBursatil() {
-    //     try {
-    //         return await this.indiceService.postIndiceBursatilInGempresa();
-    //     } catch (error) {
-    //         throw new HttpException({
-    //             status: HttpStatus.BAD_REQUEST,
-    //             error: error.message || 'Error al crear el índice',
-    //         }, HttpStatus.BAD_REQUEST);
-    //     }
-    // }
-
-    // @Post('indice-bursatil')
-    // async createIndiceBSursatil() {
-    //     try {
-    //         return await this.indiceService.verifyIfExistIndice();
-    //     } catch (error) {
-    //         throw new HttpException({
-    //             status: HttpStatus.BAD_REQUEST,
-    //             error: error.message || 'Error al crear el índice',
-    //         }, HttpStatus.BAD_REQUEST);
-    //     }
-    // }
-
-    //Post de mi indice
-    // @Post('create')
-    // async createIndice(@Body() indice: IIndice) {
-    //     try {
-    //         return await this.indiceService.createIndice(indice);
-    //     } catch (error) {
-    //         throw new HttpException({
-    //             status: HttpStatus.BAD_REQUEST,
-    //             error: error.message || 'Error al crear el índice',
-    //         }, HttpStatus.BAD_REQUEST);
-    //     }
-    // }
-}
 }
