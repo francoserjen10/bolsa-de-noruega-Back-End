@@ -36,4 +36,15 @@ export class CronService {
             throw new Error('Error en ejecucion del Cron')
         }
     }
+
+    @Cron('0 5 * * * *')
+    async getAndSaveIndicesBursatiles() {
+        try {
+            await this.indiceService.getAllIndicesBursatilesInGempresa();
+            console.log("Ejecucion cron 1 hora y 10m");
+        } catch (error) {
+            console.error('Error en la ejecución del Cron:', error);
+            throw new Error('Error en ejecucion del Cron')
+        }
+    }
 }

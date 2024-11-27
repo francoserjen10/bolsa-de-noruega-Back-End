@@ -8,7 +8,7 @@ import { baseURL } from 'src/axios/config.gempresa';
 import { lastValueFrom } from 'rxjs';
 import { ICotizacion } from 'src/cotizaciones/models/interface/cotizacion.interface';
 import { Cotizacion } from 'src/cotizaciones/models/schemas/cotizacion';
-import { IValueIndice } from '../models/interface/value-indice.interface';
+import { IRawValueIndice, IValueIndice } from '../models/interface/value-indice.interface';
 import { ValueIndice } from '../models/schemas/value-indice';
 
 @Injectable()
@@ -20,6 +20,80 @@ export class IndiceService {
         @InjectModel(Cotizacion.name) private cotizacionModel: Model<Cotizacion>,
         @InjectModel(ValueIndice.name) private valueIndiceModel: Model<ValueIndice>
     ) { }
+
+    // Metodo base para trabajar con los indices de todos a la vez
+    async getAllIndicesBursatilesInGempresa(): Promise<IValueIndice[]> {
+        try {
+            let newDate = new Date();
+            const formatedDate = newDate.toISOString().slice(0, 16);
+            const allIndices: IIndice[] = await this.getAllIndicesInLocal();
+            const allProcessedIndices: IValueIndice[] = [];
+            for (const indice of allIndices) {
+                if (!indice.code || indice.code.trim() === '') {
+                    console.warn(`Índice con código inválido:`, indice);
+                    continue;
+                }
+                let initialDate = await this.getAndSumLastDate(indice.code);
+                console.log(`Procesando índice ${indice.code} desde ${initialDate} hasta ${formatedDate}`);
+                const missingIndices: IValueIndice[] = await this.getIndicesBursatilesForIndiceAndDateRange(indice.code, initialDate, formatedDate);
+                if (!missingIndices || missingIndices.length === 0) {
+                    console.log(`No hay índices bursátiles nuevos para ${indice.code}`);
+                    continue;
+                }
+                await this.saveIndicesBursatilesToDatabase(missingIndices);
+                allProcessedIndices.push(...missingIndices);
+            }
+            console.log("Todos los índices procesados correctamente:", allProcessedIndices);
+            return allProcessedIndices;
+        } catch (error) {
+            console.error("Error al procesar los índices bursátiles:", error);
+            throw new Error('Error al procesar los índices bursátiles.');
+        }
+    }
+
+    async getIndicesBursatilesForIndiceAndDateRange(codigoIndice: string, startDate: string, endDate: string): Promise<IValueIndice[]> {
+        try {
+            const indice = this.indiceModel.findOne({ code: codigoIndice });
+            if (!indice) {
+                throw new Error(`El indice con código: ${codigoIndice} no se encuentra registrado.`);
+            }
+            const response$ = this.httpService.get(`${baseURL}/indices/${codigoIndice}/cotizaciones?fechaDesde=${startDate}&fechaHasta=${endDate}`);
+            const responeData = await lastValueFrom(response$).then((value) => value.data);
+            if (responeData.lenght === 0) {
+                throw new Error(`No se encuentran los indices bursatiles.`);
+            }
+            const savedIndicesBursatiles = await Promise.all(
+                responeData.map(async (indBurData) => {
+                    return ({
+                        ...indBurData
+                    });
+                })
+            );
+            return savedIndicesBursatiles;
+        } catch (error) {
+            console.error(
+                `Error al obtener índices bursátiles para el código: ${codigoIndice}, rango: ${startDate} - ${endDate}.`,
+                error.message
+            );
+        }
+    }
+
+    async getAndSumLastDate(codeIndice: string): Promise<string> {
+        try {
+            const findLasDate = await this.valueIndiceModel.findOne({ codigoIndice: codeIndice }).sort({ fecha: -1, hora: -1 });
+            if (findLasDate === null) {
+                return '2024-01-01T00:00';
+            } else {
+                const [year, month, day] = findLasDate.fecha.split('-').map(Number);
+                const [hours, minutes] = findLasDate.hora.split(':').map(Number);
+                const fullDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+                const endTime = new Date(fullDate.getTime() + 60 * 60 * 1000);
+                return endTime.toISOString().slice(0, 16);
+            }
+        } catch (error) {
+            throw new Error('Error al obtener la fecha del indice bursatil');
+        }
+    }
 
     async postIndiceBursatilInGempresa(): Promise<IValueIndice[]> {
         try {
@@ -64,7 +138,6 @@ export class IndiceService {
         }
     }
 
-
     async getAllMyIndicesBursatiles(): Promise<IValueIndice[]> {
         try {
             const allMyIndicesBursatiles: IValueIndice[] = await this.valueIndiceModel.find();
@@ -80,7 +153,6 @@ export class IndiceService {
 
     async filterIndicesBursatilesMissing(allIndicesBursatilLocal: IValueIndice[]) {
         try {
-            // Obtener índices existentes del servidor
             const existingIngices: IValueIndice[] = await lastValueFrom(
                 this.httpService.get(`http://ec2-54-145-211-254.compute-1.amazonaws.com:3000/indices/BRN/cotizaciones?fechaDesde=2024-01-01T01%3A00&fechaHasta=2025-01-01T00%3A00`)
             ).then((res) => res.data);
@@ -165,20 +237,34 @@ export class IndiceService {
                     valorIndice: value
                 };
             });
-            return this.saveIndicesBursatilesToDatabase(indicesByHour)
+            return this.saveIndicesBursatilesToDatabase(indicesByHour);
         } catch (error) {
             console.error("Error al calcular o guardar los índices:", error);
             throw new Error("Error al procesar las cotizaciones y enviar los índices.");
         }
     }
 
-    private async saveIndicesBursatilesToDatabase(indicesBursatiles: IValueIndice[]): Promise<IValueIndice[]> {
+    private async saveIndicesBursatilesToDatabase(indicesBursatiles: IValueIndice[] | IRawValueIndice[]): Promise<IValueIndice[]> {
         try {
-            const savedIndBursatiles: IValueIndice[] = await this.valueIndiceModel.insertMany(indicesBursatiles);
+            const transformedIndices = indicesBursatiles.map(indice => ({
+                codigoIndice: indice.code,
+                fecha: indice.fecha,
+                hora: indice.hora,
+                fechaDate: indice.fechaDate,
+                valorIndice: indice.valor
+            }));
+            const savedIndBursatiles: IValueIndice[] = await this.valueIndiceModel.insertMany(transformedIndices);
             console.log("Indices bursatiles guardados exitosamente en la base de datos.", savedIndBursatiles);
             return savedIndBursatiles;
         } catch (error) {
-            console.error("Error al guardar las cotizaciones en la base de datos:", error);
+            console.error("Error al guardar las cotizaciones en la base de datos:", {
+                message: error.message,
+                stack: error.stack,
+                data: indicesBursatiles,
+            });
+            if (error.code === 11000) {
+                console.error("Error de duplicados:", error.keyValue);
+            }
             throw new Error("No se pudo guardar las cotizaciones en la base de datos.");
         }
     }
