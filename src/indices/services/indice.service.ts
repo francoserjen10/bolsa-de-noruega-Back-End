@@ -21,6 +21,19 @@ export class IndiceService {
         @InjectModel(ValueIndice.name) private valueIndiceModel: Model<ValueIndice>
     ) { }
 
+    async getAllIndicesBursatilesInLocal(): Promise<IValueIndice[]> {
+        try {
+            const allIndicesBursatiles: IValueIndice[] = await this.valueIndiceModel.find();
+            if (!allIndicesBursatiles || allIndicesBursatiles.length === 0) {
+                throw new Error("No se encontraron índices bursátiles en la base de datos.");
+            }
+            return allIndicesBursatiles;
+        } catch (error) {
+            console.error("Error al obtener los índices bursátiles:", error.message);
+            throw new Error("No se pudo obtener los índices bursátiles.");
+        }
+    }
+
     // Metodo base para trabajar con los indices de todos a la vez
     async getAllIndicesBursatilesInGempresa(): Promise<IValueIndice[]> {
         try {

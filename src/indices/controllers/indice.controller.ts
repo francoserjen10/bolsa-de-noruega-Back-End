@@ -8,21 +8,17 @@ export class IndiceController {
 
     constructor(private indiceService: IndiceService) { }
 
-    @Get()
-    async getAllIndicesBursatilesInGempresa() {
-
-    }
-
-    @Get()
-    async getAllMyIndicesBursatiles(): Promise<IValueIndice[]> {
+    @Get('all-indices-bursatiles-local')
+    async getAllIndicesBursatilesInLocal(): Promise<IValueIndice[]> {
         try {
-            return await this.indiceService.getAllMyIndicesBursatiles();
+            const allIndicesBursatiles = await this.indiceService.getAllIndicesBursatilesInLocal();
+            if (!allIndicesBursatiles || allIndicesBursatiles.length === 0) {
+                throw new Error("No se encontraron índices bursátiles en la base de datos.");
+            }
+            return allIndicesBursatiles
         } catch (error) {
-            console.error("Error en getAllMyIndicesBursatiles del controlador:", error);
-            throw new HttpException(
-                error.message || 'Error al obtener los índices bursátiles',
-                HttpStatus.INTERNAL_SERVER_ERROR
-            );
+            console.error("Error al obtener los índices bursátiles:", error.message);
+            throw new Error("Error al obtener los índices bursátiles.");
         }
     }
 
