@@ -7,7 +7,7 @@ export type ValueIndiceDocument = HydratedDocument<IValueIndice>;
 @Schema()
 export class ValueIndice {
     @Prop({ type: Number, required: true })
-    valor: number;
+    valorIndice: number;
     @Prop({ type: String, required: true })
     fecha: string;
     @Prop({ type: String, required: true })
@@ -15,6 +15,6 @@ export class ValueIndice {
     @Prop({ type: Date, required: true })
     fechaDate: Date;
     @Prop({ type: String, required: true })
-    codIndice: string;
+    codigoIndice: string
 }
 export const ValueIndiceSchema = SchemaFactory.createForClass(ValueIndice);

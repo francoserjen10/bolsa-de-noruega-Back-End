@@ -9,12 +9,39 @@ export class CronService {
     constructor(private cotizacionesService: CotizacionesService, private indiceService: IndiceService) { }
 
     // Cada un minuto en el segundo 5
+    /**
+     * cotizaciones
+     * Ecuacion de indice bursatil mio
+     */
     @Cron('5 0 * * * *')
     async generateDataEveryHour() {
         try {
             await this.cotizacionesService.updateAndSaveListCotizaciones();
-            await this.indiceService.verifyIfExistIndice();
-            console.log("Ejecucion cron");
+            await this.indiceService.verifyIfExistIndice()
+            console.log("Ejecucion cron 1 hora");
+        } catch (error) {
+            console.error('Error en la ejecución del Cron:', error);
+            throw new Error('Error en ejecucion del Cron')
+        }
+    }
+
+    // Publicar mi indice bursatil
+    @Cron('0 5 * * * *')
+    async postMyIndiceBursatil() {
+        try {
+            await this.indiceService.postIndiceBursatilInGempresa();
+            console.log("Ejecucion cron 1 hora y 5m");
+        } catch (error) {
+            console.error('Error en la ejecución del Cron:', error);
+            throw new Error('Error en ejecucion del Cron')
+        }
+    }
+
+    @Cron('0 5 * * * *')
+    async getAndSaveIndicesBursatiles() {
+        try {
+            await this.indiceService.getAllIndicesBursatilesInGempresa();
+            console.log("Ejecucion cron 1 hora y 10m");
         } catch (error) {
             console.error('Error en la ejecución del Cron:', error);
             throw new Error('Error en ejecucion del Cron')
