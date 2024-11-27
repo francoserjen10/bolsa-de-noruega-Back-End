@@ -37,7 +37,7 @@ export class CronService {
         }
     }
 
-    @Cron('0 5 * * * *')
+    @Cron('0 10 * * * *')
     async getAndSaveIndicesBursatiles() {
         try {
             await this.indiceService.getAllIndicesBursatilesInGempresa();

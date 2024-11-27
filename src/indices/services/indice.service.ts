@@ -153,7 +153,7 @@ export class IndiceService {
 
     async getAllMyIndicesBursatiles(): Promise<IValueIndice[]> {
         try {
-            const allMyIndicesBursatiles: IValueIndice[] = await this.valueIndiceModel.find();
+            const allMyIndicesBursatiles: IValueIndice[] = await this.valueIndiceModel.find({ codigoIndice: 'BRN' });
             if (allMyIndicesBursatiles.length <= 0) {
                 throw new Error("No se encontraron índices bursátiles en la base de datos.");
             }
@@ -260,11 +260,11 @@ export class IndiceService {
     private async saveIndicesBursatilesToDatabase(indicesBursatiles: IValueIndice[] | IRawValueIndice[]): Promise<IValueIndice[]> {
         try {
             const transformedIndices = indicesBursatiles.map(indice => ({
-                codigoIndice: indice.code,
+                codigoIndice: indice.code || indice.codigoIndice,
                 fecha: indice.fecha,
                 hora: indice.hora,
                 fechaDate: indice.fechaDate,
-                valorIndice: indice.valor
+                valorIndice: indice.valor || indice.valorIndice
             }));
             const savedIndBursatiles: IValueIndice[] = await this.valueIndiceModel.insertMany(transformedIndices);
             console.log("Indices bursatiles guardados exitosamente en la base de datos.", savedIndBursatiles);
