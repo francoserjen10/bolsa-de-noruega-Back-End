@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 
-export const baseURL = process.env.API_BASE_URL1;
+export const baseURL = 'http://ec2-54-145-211-254.compute-1.amazonaws.com:3000';
 
 const axiosInstance: AxiosInstance = axios.create({
     baseURL,
