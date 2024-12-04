@@ -122,4 +122,38 @@ export class CotizacionesService {
             throw new Error(`Error al obtener las cotizaciones de: ${cod} desde MongoDB.`);
         }
     }
+
+    async getLatestCotizacionesInLocal(): Promise<Cotizacion[]> {
+        try {
+            const latestCotizaciones: Cotizacion[] = [];
+            for (const empresa of empresasList) {
+                const latest = await this.cotizacionModel
+                    .find({ empresa })
+                    .sort({ fecha: -1, hora: -1 })
+                    .limit(2);
+                if (latest.length > 1) {
+                    latestCotizaciones.push(latest[0]);
+                    latestCotizaciones.push(latest[1]);
+                } else if (latest.length > 0) {
+                    latestCotizaciones.push(latest[0]); // Solo la última cotización si no hay segunda
+                }
+            }
+            console.log('Últimas cotizaciones:', latestCotizaciones);
+            return latestCotizaciones;
+        } catch (error) {
+            throw new Error(`Error al obtener las últimas cotizaciones desde MongoDB: ${error.message}`);
+        }
+    }
+
+    async getAllCotizaciones(): Promise<Cotizacion[]> {
+        try {
+            const allCotizaciones = this.cotizacionModel.find();
+            if (!allCotizaciones) {
+                throw new Error('No hay cotiazciones disponibles de ninguna empresa')
+            }
+            return allCotizaciones;
+        } catch (error) {
+            throw new Error(`Error al obtener todas las cotizaciones de todas las empresas: ${error.message}`)
+        }
+    }
 }

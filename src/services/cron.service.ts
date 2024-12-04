@@ -17,11 +17,12 @@ export class CronService {
     async generateDataEveryHour() {
         try {
             await this.cotizacionesService.updateAndSaveListCotizaciones();
-            await this.indiceService.verifyIfExistIndice()
+            await this.indiceService.verifyIfExistIndice();
+            await this.indiceService.getAllIndicesOfGempresa();
             console.log("Ejecucion cron 1 hora");
         } catch (error) {
             console.error('Error en la ejecución del Cron:', error);
-            throw new Error('Error en ejecucion del Cron')
+            throw new Error('Error en ejecucion del Cron');
         }
     }
 
@@ -33,7 +34,7 @@ export class CronService {
             console.log("Ejecucion cron 1 hora y 5m");
         } catch (error) {
             console.error('Error en la ejecución del Cron:', error);
-            throw new Error('Error en ejecucion del Cron')
+            throw new Error('Error en ejecucion del Cron');
         }
     }
 
@@ -44,7 +45,7 @@ export class CronService {
             console.log("Ejecucion cron 1 hora y 10m");
         } catch (error) {
             console.error('Error en la ejecución del Cron:', error);
-            throw new Error('Error en ejecucion del Cron')
+            throw new Error('Error en ejecucion del Cron');
         }
     }
 }
